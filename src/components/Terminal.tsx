@@ -108,7 +108,7 @@ export default function Terminal({ taskId }: TerminalProps) {
   return (
     <div
       ref={terminalRef}
-      className="w-full h-[500px] rounded-lg overflow-hidden border border-gray-700 bg-[#0a0a0a]"
+      className="w-full h-full overflow-hidden bg-terminal-bg"
     />
   );
 }
