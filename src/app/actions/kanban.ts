@@ -1,0 +1,216 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { getTaskRepository } from "@/lib/database";
+import { KanbanTask, TaskStatus, SessionType } from "@/entities/KanbanTask";
+import { createWorktreeWithSession, removeWorktreeAndSession } from "@/lib/worktree";
+import { getProjectRepository } from "@/lib/database";
+
+export type TasksByStatus = Record<TaskStatus, KanbanTask[]>;
+
+/** TypeORM 엔티티를 직렬화 가능한 plain object로 변환한다 */
+function serialize<T>(data: T): T {
+  return JSON.parse(JSON.stringify(data));
+}
+
+/** 모든 작업을 상태별로 그룹핑하여 반환한다 */
+export async function getTasksByStatus(): Promise<TasksByStatus> {
+  const repo = await getTaskRepository();
+  const tasks = await repo.find({ order: { displayOrder: "ASC", createdAt: "ASC" } });
+
+  const grouped: TasksByStatus = {
+    [TaskStatus.TODO]: [],
+    [TaskStatus.PROGRESS]: [],
+    [TaskStatus.REVIEW]: [],
+    [TaskStatus.DONE]: [],
+  };
+
+  for (const task of tasks) {
+    grouped[task.status].push(task);
+  }
+
+  return serialize(grouped);
+}
+
+/** 단일 작업을 ID로 조회한다 */
+export async function getTaskById(taskId: string): Promise<KanbanTask | null> {
+  const repo = await getTaskRepository();
+  const task = await repo.findOneBy({ id: taskId });
+  return task ? serialize(task) : null;
+}
+
+export interface CreateTaskInput {
+  title: string;
+  description?: string;
+  branchName?: string;
+  baseBranch?: string;
+  sessionType?: SessionType;
+  sshHost?: string;
+  projectId?: string;
+}
+
+/** 새 작업을 생성한다. branchName + projectId가 있으면 worktree와 세션도 함께 생성한다 */
+export async function createTask(input: CreateTaskInput): Promise<KanbanTask> {
+  const repo = await getTaskRepository();
+
+  const task = repo.create({
+    title: input.title,
+    description: input.description || null,
+    branchName: input.branchName || null,
+    baseBranch: input.baseBranch || null,
+    sessionType: input.sessionType || null,
+    sshHost: input.sshHost || null,
+    projectId: input.projectId || null,
+    status: TaskStatus.TODO,
+  });
+
+  if (input.branchName && input.sessionType && input.projectId) {
+    try {
+      const projectRepo = await getProjectRepository();
+      const project = await projectRepo.findOneBy({ id: input.projectId });
+
+      if (project) {
+        const baseBranch = input.baseBranch || project.defaultBranch;
+        const session = await createWorktreeWithSession(
+          project.repoPath,
+          input.branchName,
+          baseBranch,
+          input.sessionType,
+          project.sshHost
+        );
+        task.worktreePath = session.worktreePath;
+        task.sessionName = session.sessionName;
+        task.sshHost = project.sshHost;
+        task.status = TaskStatus.PROGRESS;
+      }
+    } catch (error) {
+      console.error("Worktree/세션 생성 실패:", error);
+    }
+  }
+
+  const saved = await repo.save(task);
+  revalidatePath("/");
+  return serialize(saved);
+}
+
+/** 작업의 상태를 변경한다 */
+export async function updateTaskStatus(
+  taskId: string,
+  newStatus: TaskStatus
+): Promise<KanbanTask | null> {
+  const repo = await getTaskRepository();
+  const task = await repo.findOneBy({ id: taskId });
+  if (!task) return null;
+
+  task.status = newStatus;
+  const saved = await repo.save(task);
+  revalidatePath("/");
+  return serialize(saved);
+}
+
+/** 작업의 정보를 부분 업데이트한다 */
+export async function updateTask(
+  taskId: string,
+  updates: Partial<Pick<KanbanTask, "title" | "description">>
+): Promise<KanbanTask | null> {
+  const repo = await getTaskRepository();
+  const task = await repo.findOneBy({ id: taskId });
+  if (!task) return null;
+
+  if (updates.title !== undefined) task.title = updates.title;
+  if (updates.description !== undefined) task.description = updates.description;
+
+  const saved = await repo.save(task);
+  revalidatePath("/");
+  revalidatePath(`/task/${taskId}`);
+  return serialize(saved);
+}
+
+/** 작업을 삭제한다. worktree와 세션이 있으면 함께 정리한다 */
+export async function deleteTask(taskId: string): Promise<boolean> {
+  const repo = await getTaskRepository();
+  const task = await repo.findOneBy({ id: taskId });
+  if (!task) return false;
+
+  if (task.branchName && task.sessionType && task.sessionName) {
+    try {
+      let projectPath = process.cwd();
+      if (task.projectId) {
+        const projectRepo = await getProjectRepository();
+        const project = await projectRepo.findOneBy({ id: task.projectId });
+        if (project) projectPath = project.repoPath;
+      }
+
+      await removeWorktreeAndSession(
+        projectPath,
+        task.branchName,
+        task.sessionType,
+        task.sessionName,
+        task.sshHost
+      );
+    } catch (error) {
+      console.error("Worktree/세션 정리 실패:", error);
+    }
+  }
+
+  await repo.remove(task);
+  revalidatePath("/");
+  return true;
+}
+
+/**
+ * 기존 작업에서 브랜치를 분기한다.
+ * worktree + 세션을 생성하고 상태를 progress로 변경한다.
+ */
+export async function branchFromTask(
+  taskId: string,
+  projectId: string,
+  baseBranch: string,
+  branchName: string,
+  sessionType: SessionType
+): Promise<KanbanTask | null> {
+  const repo = await getTaskRepository();
+  const task = await repo.findOneBy({ id: taskId });
+  if (!task) return null;
+
+  const projectRepo = await getProjectRepository();
+  const project = await projectRepo.findOneBy({ id: projectId });
+  if (!project) return null;
+
+  const session = await createWorktreeWithSession(
+    project.repoPath,
+    branchName,
+    baseBranch,
+    sessionType,
+    project.sshHost
+  );
+
+  task.projectId = projectId;
+  task.branchName = branchName;
+  task.baseBranch = baseBranch;
+  task.sessionType = sessionType;
+  task.sessionName = session.sessionName;
+  task.worktreePath = session.worktreePath;
+  task.sshHost = project.sshHost;
+  task.status = TaskStatus.PROGRESS;
+
+  const saved = await repo.save(task);
+  revalidatePath("/");
+  revalidatePath(`/task/${taskId}`);
+  return serialize(saved);
+}
+
+/** 컬럼 내 작업 순서를 변경한다 */
+export async function reorderTasks(
+  status: TaskStatus,
+  orderedIds: string[]
+): Promise<void> {
+  const repo = await getTaskRepository();
+
+  const updates = orderedIds.map((id, index) =>
+    repo.update(id, { displayOrder: index })
+  );
+
+  await Promise.all(updates);
+  revalidatePath("/");
+}
