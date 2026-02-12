@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { branchFromTask } from "@/app/actions/kanban";
 import { getProjectBranches } from "@/app/actions/project";
 import { SessionType, type KanbanTask } from "@/entities/KanbanTask";
@@ -18,6 +19,8 @@ export default function BranchTaskModal({
   projects,
   onClose,
 }: BranchTaskModalProps) {
+  const t = useTranslations("branch");
+  const tc = useTranslations("common");
   const [isPending, startTransition] = useTransition();
   const [selectedProjectId, setSelectedProjectId] = useState(
     projects[0]?.id || ""
@@ -48,7 +51,7 @@ export default function BranchTaskModal({
     setError(null);
 
     if (!selectedProjectId || !branchName) {
-      setError("프로젝트와 브랜치 이름은 필수입니다.");
+      setError(t("validationError"));
       return;
     }
 
@@ -64,32 +67,34 @@ export default function BranchTaskModal({
         onClose();
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "브랜치 분기에 실패했습니다."
+          err instanceof Error ? err.message : t("failedError")
         );
       }
     });
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-md bg-gray-900 rounded-lg border border-gray-700 p-6">
-        <h2 className="text-lg font-semibold mb-1">브랜치 분기</h2>
-        <p className="text-sm text-gray-400 mb-4 truncate">
+    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-bg-overlay">
+      <div className="w-full max-w-md bg-bg-surface rounded-xl border border-border-default shadow-lg p-6">
+        <h2 className="text-lg font-semibold text-text-primary mb-1">
+          {t("title")}
+        </h2>
+        <p className="text-sm text-text-secondary mb-4 truncate">
           {task.title}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              프로젝트 *
+            <label className="block text-sm text-text-secondary mb-1">
+              {t("projectRequired")}
             </label>
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary transition-colors"
             >
               {projects.length === 0 && (
-                <option value="">등록된 프로젝트 없음</option>
+                <option value="">{t("noProjects")}</option>
               )}
               {projects.map((project) => (
                 <option key={project.id} value={project.id}>
@@ -101,13 +106,13 @@ export default function BranchTaskModal({
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              베이스 브랜치
+            <label className="block text-sm text-text-secondary mb-1">
+              {t("baseBranch")}
             </label>
             <select
               value={baseBranch}
               onChange={(e) => setBaseBranch(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500 font-mono"
+              className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary font-mono transition-colors"
             >
               {branches.map((branch) => (
                 <option key={branch} value={branch}>
@@ -121,47 +126,47 @@ export default function BranchTaskModal({
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              새 브랜치 이름 *
+            <label className="block text-sm text-text-secondary mb-1">
+              {t("newBranchName")}
             </label>
             <input
               value={branchName}
               onChange={(e) => setBranchName(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500 font-mono"
-              placeholder="feat/my-feature"
+              className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary font-mono transition-colors"
+              placeholder={t("branchPlaceholder")}
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">
-              세션 타입
+            <label className="block text-sm text-text-secondary mb-1">
+              {t("sessionType")}
             </label>
             <select
               value={sessionType}
               onChange={(e) => setSessionType(e.target.value as SessionType)}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary transition-colors"
             >
               <option value="tmux">tmux</option>
               <option value="zellij">zellij</option>
             </select>
           </div>
 
-          {error && <p className="text-xs text-red-400">{error}</p>}
+          {error && <p className="text-xs text-status-error">{error}</p>}
 
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+              className="px-4 py-2 text-sm text-text-muted hover:text-text-primary transition-colors"
             >
-              취소
+              {tc("cancel")}
             </button>
             <button
               type="submit"
               disabled={isPending || projects.length === 0}
-              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white rounded font-medium transition-colors"
+              className="px-4 py-2 text-sm bg-brand-primary hover:bg-brand-hover disabled:opacity-50 text-text-inverse rounded-md font-medium transition-colors"
             >
-              {isPending ? "생성 중..." : "분기"}
+              {isPending ? t("submitting") : t("submit")}
             </button>
           </div>
         </form>

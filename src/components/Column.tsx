@@ -8,19 +8,19 @@ interface ColumnProps {
   status: TaskStatus;
   tasks: KanbanTask[];
   label: string;
-  color: string;
+  colorClass: string;
   onContextMenu: (e: React.MouseEvent, task: KanbanTask) => void;
 }
 
-export default function Column({ status, tasks, label, color, onContextMenu }: ColumnProps) {
+export default function Column({ status, tasks, label, colorClass, onContextMenu }: ColumnProps) {
   return (
     <div className="flex-1 min-w-[280px] max-w-[350px]">
       <div className="flex items-center gap-2 mb-3 px-2">
-        <div className={`w-3 h-3 rounded-full ${color}`} />
-        <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
+        <div className={`w-3 h-3 rounded-full ${colorClass}`} />
+        <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wide">
           {label}
         </h2>
-        <span className="text-xs text-gray-500 ml-auto">{tasks.length}</span>
+        <span className="text-xs text-text-muted ml-auto">{tasks.length}</span>
       </div>
 
       <Droppable droppableId={status}>
@@ -30,7 +30,7 @@ export default function Column({ status, tasks, label, color, onContextMenu }: C
             {...provided.droppableProps}
             className={`min-h-[200px] p-2 rounded-lg transition-colors ${
               snapshot.isDraggingOver
-                ? "bg-gray-800/50 border border-dashed border-gray-600"
+                ? "bg-brand-subtle border border-dashed border-brand-primary"
                 : "bg-transparent"
             }`}
           >

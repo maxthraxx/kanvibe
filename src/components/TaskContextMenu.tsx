@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 
 interface TaskContextMenuProps {
   x: number;
@@ -21,6 +22,7 @@ export default function TaskContextMenu({
   hasBranch,
 }: TaskContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations("contextMenu");
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -36,22 +38,22 @@ export default function TaskContextMenu({
   return (
     <div
       ref={menuRef}
-      className="fixed z-[60] min-w-[160px] bg-gray-800 border border-gray-600 rounded-lg shadow-xl py-1"
+      className="fixed z-[500] min-w-[160px] bg-bg-surface border border-border-default rounded-lg shadow-lg py-1"
       style={{ left: x, top: y }}
     >
       {!hasBranch && (
         <button
           onClick={onBranch}
-          className="w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-700 transition-colors"
+          className="w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-bg-page transition-colors"
         >
-          브랜치 분기
+          {t("branchOff")}
         </button>
       )}
       <button
         onClick={onDelete}
-        className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 transition-colors"
+        className="w-full text-left px-4 py-2 text-sm text-status-error hover:bg-red-50 transition-colors"
       >
-        삭제
+        {t("delete")}
       </button>
     </div>
   );

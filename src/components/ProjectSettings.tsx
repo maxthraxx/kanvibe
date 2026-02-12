@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import {
   deleteProject,
   scanAndRegisterProjects,
@@ -21,6 +22,8 @@ export default function ProjectSettings({
   projects,
   sshHosts,
 }: ProjectSettingsProps) {
+  const t = useTranslations("settings");
+  const tc = useTranslations("common");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -35,7 +38,7 @@ export default function ProjectSettings({
 
     const scanPath = formData.get("scanPath") as string;
     if (!scanPath) {
-      setError("스캔할 디렉토리 경로를 입력하세요.");
+      setError(t("scanPathRequired"));
       return;
     }
 
@@ -48,18 +51,18 @@ export default function ProjectSettings({
 
       if (result.registered.length > 0) {
         setSuccessMessage(
-          `${result.registered.length}개 프로젝트 등록 완료`
+          t("registeredCount", { count: result.registered.length })
         );
       } else if (result.skipped.length > 0) {
-        setSuccessMessage("새로 등록할 프로젝트가 없습니다.");
+        setSuccessMessage(t("noNewProjects"));
       } else {
-        setError("git 저장소를 찾을 수 없습니다.");
+        setError(t("noGitRepos"));
       }
     });
   }
 
   function handleDelete(projectId: string, projectName: string) {
-    if (!confirm(`"${projectName}" 프로젝트를 삭제하시겠습니까?`)) return;
+    if (!confirm(t("deleteConfirm", { name: projectName }))) return;
 
     startTransition(async () => {
       await deleteProject(projectId);
@@ -67,39 +70,39 @@ export default function ProjectSettings({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-end pt-14 pr-4">
+    <div className="fixed inset-0 z-[400] flex items-start justify-end pt-14 pr-4">
       <div className="fixed inset-0" onClick={onClose} />
-      <div className="relative w-96 bg-gray-900 rounded-lg border border-gray-700 shadow-xl max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
-          <h2 className="text-sm font-semibold">프로젝트 관리</h2>
+      <div className="relative w-96 bg-bg-surface rounded-xl border border-border-default shadow-lg max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-4 border-b border-border-default">
+          <h2 className="text-sm font-semibold text-text-primary">{t("title")}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-lg"
+            className="text-text-muted hover:text-text-primary text-lg"
           >
             &times;
           </button>
         </div>
 
         {/* 디렉토리 스캔 등록 */}
-        <div className="p-4 border-b border-gray-700">
-          <h3 className="text-xs text-gray-400 uppercase tracking-wide mb-3">
-            디렉토리 스캔
+        <div className="p-4 border-b border-border-default">
+          <h3 className="text-xs text-text-muted uppercase tracking-wide mb-3">
+            {t("scanTitle")}
           </h3>
 
           <form action={handleScan} className="space-y-3">
             <input
               name="scanPath"
               required
-              placeholder="스캔할 디렉토리 경로 (예: ~/Documents)"
-              className="w-full px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500 font-mono"
+              placeholder={t("scanPathPlaceholder")}
+              className="w-full px-3 py-1.5 text-sm bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary font-mono transition-colors"
             />
 
             {sshHosts.length > 0 && (
               <select
                 name="scanSshHost"
-                className="w-full px-3 py-1.5 text-sm bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-1.5 text-sm bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary transition-colors"
               >
-                <option value="">로컬</option>
+                <option value="">{tc("local")}</option>
                 {sshHosts.map((host) => (
                   <option key={host} value={host}>
                     {host}
@@ -111,77 +114,77 @@ export default function ProjectSettings({
             <button
               type="submit"
               disabled={isPending}
-              className="w-full py-1.5 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white rounded transition-colors"
+              className="w-full py-1.5 text-sm bg-brand-primary hover:bg-brand-hover disabled:opacity-50 text-text-inverse rounded-md transition-colors"
             >
-              {isPending ? "스캔 중..." : "스캔 및 등록"}
+              {isPending ? t("scanning") : t("scanButton")}
             </button>
           </form>
 
           {scanResult && (
             <div className="mt-3 space-y-1">
               {scanResult.registered.length > 0 && (
-                <div className="text-xs text-green-400">
-                  등록: {scanResult.registered.join(", ")}
+                <div className="text-xs text-status-success">
+                  {t("registered")}: {scanResult.registered.join(", ")}
                 </div>
               )}
               {scanResult.skipped.length > 0 && (
-                <div className="text-xs text-gray-500">
-                  건너뜀: {scanResult.skipped.length}개 (이미 등록)
+                <div className="text-xs text-text-muted">
+                  {t("skipped")}: {scanResult.skipped.length}{t("skippedSuffix")}
                 </div>
               )}
               {scanResult.errors.length > 0 && (
-                <div className="text-xs text-red-400">
-                  오류: {scanResult.errors.length}개
+                <div className="text-xs text-status-error">
+                  {t("errors")}: {scanResult.errors.length}{t("errorsSuffix")}
                 </div>
               )}
             </div>
           )}
 
-          {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
+          {error && <p className="text-xs text-status-error mt-2">{error}</p>}
           {successMessage && (
-            <p className="text-xs text-green-400 mt-2">{successMessage}</p>
+            <p className="text-xs text-status-success mt-2">{successMessage}</p>
           )}
         </div>
 
         {/* 등록된 프로젝트 목록 */}
         <div className="p-4 space-y-3">
-          <h3 className="text-xs text-gray-400 uppercase tracking-wide">
-            등록된 프로젝트 ({projects.length})
+          <h3 className="text-xs text-text-muted uppercase tracking-wide">
+            {t("projectList")} ({projects.length})
           </h3>
 
           {projects.length === 0 ? (
-            <p className="text-sm text-gray-500">
-              등록된 프로젝트가 없습니다.
+            <p className="text-sm text-text-muted">
+              {t("noProjects")}
             </p>
           ) : (
             <ul className="space-y-2">
               {projects.map((project) => (
                 <li
                   key={project.id}
-                  className="flex items-center justify-between p-2 bg-gray-800 rounded"
+                  className="flex items-center justify-between p-2 bg-bg-page rounded-md"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">
+                    <p className="text-sm font-medium text-text-primary truncate">
                       {project.name}
                     </p>
-                    <p className="text-xs text-gray-400 font-mono truncate">
+                    <p className="text-xs text-text-muted font-mono truncate">
                       {project.sshHost && (
-                        <span className="text-teal-400">
+                        <span className="text-tag-ssh-text">
                           {project.sshHost}:
                         </span>
                       )}
                       {project.repoPath}
                     </p>
-                    <p className="text-xs text-gray-500">
-                      기본 브랜치: {project.defaultBranch}
+                    <p className="text-xs text-text-muted">
+                      {t("defaultBranch")}: {project.defaultBranch}
                     </p>
                   </div>
                   <button
                     onClick={() => handleDelete(project.id, project.name)}
                     disabled={isPending}
-                    className="ml-2 text-xs text-red-400 hover:text-red-300 shrink-0"
+                    className="ml-2 text-xs text-status-error hover:opacity-80 shrink-0"
                   >
-                    삭제
+                    {t("deleteProject")}
                   </button>
                 </li>
               ))}

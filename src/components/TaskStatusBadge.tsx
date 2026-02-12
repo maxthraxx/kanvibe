@@ -7,26 +7,26 @@ interface TaskStatusBadgeProps {
 const statusConfig: Record<TaskStatus, { label: string; className: string }> = {
   [TaskStatus.TODO]: {
     label: "Todo",
-    className: "bg-gray-700 text-gray-300",
+    className: "bg-gray-100 text-status-todo",
   },
   [TaskStatus.PROGRESS]: {
     label: "Progress",
-    className: "bg-yellow-900/60 text-yellow-300",
+    className: "bg-yellow-50 text-status-progress",
   },
   [TaskStatus.REVIEW]: {
     label: "Review",
-    className: "bg-blue-900/60 text-blue-300",
+    className: "bg-blue-50 text-status-review",
   },
   [TaskStatus.DONE]: {
     label: "Done",
-    className: "bg-green-900/60 text-green-300",
+    className: "bg-green-50 text-status-done",
   },
 };
 
 export default function TaskStatusBadge({ status }: TaskStatusBadgeProps) {
   const config = statusConfig[status];
   return (
-    <span className={`text-xs px-2 py-1 rounded font-medium ${config.className}`}>
+    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${config.className}`}>
       {config.label}
     </span>
   );

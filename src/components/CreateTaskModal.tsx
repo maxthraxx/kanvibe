@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { createTask } from "@/app/actions/kanban";
 import { getProjectBranches } from "@/app/actions/project";
 import { SessionType } from "@/entities/KanbanTask";
@@ -19,6 +20,8 @@ export default function CreateTaskModal({
   sshHosts,
   projects,
 }: CreateTaskModalProps) {
+  const t = useTranslations("task");
+  const tc = useTranslations("common");
   const [isPending, startTransition] = useTransition();
   const [isWithSession, setIsWithSession] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState("");
@@ -60,55 +63,61 @@ export default function CreateTaskModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-md bg-gray-900 rounded-lg border border-gray-700 p-6">
-        <h2 className="text-lg font-semibold mb-4">새 작업 생성</h2>
+    <div className="fixed inset-0 z-[400] flex items-center justify-center bg-bg-overlay">
+      <div className="w-full max-w-md bg-bg-surface rounded-xl border border-border-default shadow-lg p-6">
+        <h2 className="text-lg font-semibold text-text-primary mb-4">
+          {t("createTitle")}
+        </h2>
 
         <form action={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-400 mb-1">제목 *</label>
+            <label className="block text-sm text-text-secondary mb-1">
+              {t("titleRequired")}
+            </label>
             <input
               name="title"
               required
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500"
-              placeholder="작업 제목"
+              className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary transition-colors"
+              placeholder={t("titlePlaceholder")}
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">설명</label>
+            <label className="block text-sm text-text-secondary mb-1">
+              {t("descriptionLabel")}
+            </label>
             <textarea
               name="description"
               rows={3}
-              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500 resize-none"
-              placeholder="작업 설명 (선택)"
+              className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary resize-none transition-colors"
+              placeholder={t("descriptionPlaceholder")}
             />
           </div>
 
           <div>
-            <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
               <input
                 type="checkbox"
                 checked={isWithSession}
                 onChange={(e) => setIsWithSession(e.target.checked)}
                 className="rounded"
               />
-              Branch + 세션과 함께 생성
+              {t("createWithSession")}
             </label>
           </div>
 
           {isWithSession && (
             <>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
-                  프로젝트
+                <label className="block text-sm text-text-secondary mb-1">
+                  {t("project")}
                 </label>
                 <select
                   value={selectedProjectId}
                   onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary transition-colors"
                 >
-                  <option value="">프로젝트 선택</option>
+                  <option value="">{t("projectSelect")}</option>
                   {projects.map((project) => (
                     <option key={project.id} value={project.id}>
                       {project.name}
@@ -120,13 +129,13 @@ export default function CreateTaskModal({
 
               {selectedProjectId && (
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">
-                    베이스 브랜치
+                  <label className="block text-sm text-text-secondary mb-1">
+                    {t("baseBranch")}
                   </label>
                   <select
                     value={baseBranch}
                     onChange={(e) => setBaseBranch(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500 font-mono"
+                    className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary font-mono transition-colors"
                   >
                     {branches.map((branch) => (
                       <option key={branch} value={branch}>
@@ -141,23 +150,23 @@ export default function CreateTaskModal({
               )}
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
-                  Branch 이름
+                <label className="block text-sm text-text-secondary mb-1">
+                  {t("branchName")}
                 </label>
                 <input
                   name="branchName"
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500 font-mono"
-                  placeholder="feat/my-feature"
+                  className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary font-mono transition-colors"
+                  placeholder={t("branchPlaceholder")}
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-gray-400 mb-1">
-                  세션 타입
+                <label className="block text-sm text-text-secondary mb-1">
+                  {t("sessionType")}
                 </label>
                 <select
                   name="sessionType"
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary transition-colors"
                 >
                   <option value="tmux">tmux</option>
                   <option value="zellij">zellij</option>
@@ -166,14 +175,14 @@ export default function CreateTaskModal({
 
               {!selectedProjectId && sshHosts.length > 0 && (
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">
-                    SSH 호스트 (선택)
+                  <label className="block text-sm text-text-secondary mb-1">
+                    {t("sshHost")}
                   </label>
                   <select
                     name="sshHost"
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-bg-page border border-border-default rounded-md text-text-primary focus:outline-none focus:border-brand-primary transition-colors"
                   >
-                    <option value="">로컬</option>
+                    <option value="">{tc("local")}</option>
                     {sshHosts.map((host) => (
                       <option key={host} value={host}>
                         {host}
@@ -189,16 +198,16 @@ export default function CreateTaskModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+              className="px-4 py-2 text-sm text-text-muted hover:text-text-primary transition-colors"
             >
-              취소
+              {tc("cancel")}
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white rounded font-medium transition-colors"
+              className="px-4 py-2 text-sm bg-brand-primary hover:bg-brand-hover disabled:opacity-50 text-text-inverse rounded-md font-medium transition-colors"
             >
-              {isPending ? "생성 중..." : "생성"}
+              {isPending ? tc("creating") : tc("create")}
             </button>
           </div>
         </form>
