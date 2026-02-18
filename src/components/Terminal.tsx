@@ -79,9 +79,7 @@ export default function Terminal({ taskId }: TerminalProps) {
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsHost = window.location.hostname;
-    const wsPort = process.env.NEXT_PUBLIC_WS_PORT
-      ? parseInt(process.env.NEXT_PUBLIC_WS_PORT, 10)
-      : parseInt(window.location.port || "4885", 10) + 2;
+    const wsPort = parseInt(window.location.port || "4885", 10) - 1;
     const wsUrl = `${protocol}//${wsHost}:${wsPort}/api/terminal/${taskId}?cols=${term.cols}&rows=${term.rows}`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
