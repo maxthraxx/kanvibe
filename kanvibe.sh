@@ -368,9 +368,17 @@ load_env() {
     printf "  ${CHECK} $(msg env_copied)\n"
   fi
   if [ -f .env ]; then
-    while IFS= read -r line; do
+    while IFS= read -r line || [ -n "$line" ]; do
       [[ -z "$line" || "$line" == \#* ]] && continue
-      export "$line"
+      local key="${line%%=*}"
+      local value="${line#*=}"
+      # Strip surrounding quotes (double or single)
+      if [[ "$value" =~ ^\"(.*)\"$ ]]; then
+        value="${BASH_REMATCH[1]}"
+      elif [[ "$value" =~ ^\'(.*)\'$ ]]; then
+        value="${BASH_REMATCH[1]}"
+      fi
+      export "$key=$value"
     done < .env
   fi
 }
