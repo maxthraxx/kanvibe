@@ -368,7 +368,10 @@ load_env() {
     printf "  ${CHECK} $(msg env_copied)\n"
   fi
   if [ -f .env ]; then
-    export $(grep -v '^#' .env | grep -v '^$' | xargs)
+    while IFS= read -r line; do
+      [[ -z "$line" || "$line" == \#* ]] && continue
+      export "$line"
+    done < .env
   fi
 }
 
