@@ -147,7 +147,7 @@ export async function setupClaudeHooks(
       hooks: [
         {
           type: "command",
-          command: ".claude/hooks/kanvibe-prompt-hook.sh",
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/kanvibe-prompt-hook.sh',
           timeout: 10,
         },
       ],
@@ -163,7 +163,7 @@ export async function setupClaudeHooks(
       hooks: [
         {
           type: "command",
-          command: ".claude/hooks/kanvibe-question-hook.sh",
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/kanvibe-question-hook.sh',
           timeout: 10,
         },
       ],
@@ -179,7 +179,7 @@ export async function setupClaudeHooks(
       hooks: [
         {
           type: "command",
-          command: ".claude/hooks/kanvibe-prompt-hook.sh",
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/kanvibe-prompt-hook.sh',
           timeout: 10,
         },
       ],
@@ -194,7 +194,7 @@ export async function setupClaudeHooks(
       hooks: [
         {
           type: "command",
-          command: ".claude/hooks/kanvibe-stop-hook.sh",
+          command: '"$CLAUDE_PROJECT_DIR"/.claude/hooks/kanvibe-stop-hook.sh',
           timeout: 10,
         },
       ],
